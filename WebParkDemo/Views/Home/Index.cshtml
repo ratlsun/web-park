@@ -1,0 +1,67 @@
+﻿
+<div id="products" class="container" data-bind="foreach: parks">
+    <div class="row">
+        <div class="col-xs-6 col-md-5">
+            <blockquote>
+                <p data-bind="text: name"></p>
+                <small data-bind="text: description"></small>
+            </blockquote>
+        </div>
+        <div class="col-xs-4 col-md-2">
+            <ul style="margin-top:20px" class="nav nav-pills nav-stacked" data-bind="visible: place()>0 && occupied()==''">
+                <li class="active">
+                    <a href="#" data-bind="click: $root.occupyPlace"><span class=" badge pull-right" data-bind="html: '可用:'+place()"></span>预订车位</a>
+                </li>
+            </ul>
+            <button style="margin-top:20px" data-bind="visible: place()==0" type="button" class="btn btn-default btn-lg" disabled="disabled">暂无车位</button>
+            <h4 data-bind="visible: occupied()!=''" class="text-center"><span class="label label-info" data-bind="text: occupied"></span></h4>
+            <button data-bind="visible: occupied()!='', click: $root.releasePlace" type="button" class="btn btn-primary btn-block">取消预订</button>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function Park(park) {
+            var self = this;
+            self.id = ko.observable(park.Id);
+            self.name = ko.observable(park.Name);
+            self.place = ko.observable(park.PlaceCount);
+            self.character = ko.observable(park.Character);
+            self.price = ko.observable(park.Price);
+            self.ot = ko.observable(park.OpeningTime);
+            self.description = ko.computed(function () {
+                return (self.character() + '  ' + self.price() + '元/小时  ' + self.ot() + '营业');
+            });
+            self.occupied = ko.observable("");
+        }
+
+        function ParksViewModel() {
+            var self = this;
+
+            self.parks = ko.observableArray([]);
+
+            self.occupyPlace = function (park) {
+                park.occupied('已经预订09:00-12:00');
+            };
+
+            self.releasePlace = function (park) {
+                park.occupied('');
+            };
+
+            var uri = '/api/parks';
+            $.getJSON(uri, function (allData) {
+                var p = $.map(allData, function (item) { return new Park(item) });
+                self.parks(p);
+            });
+        }
+
+        $(document).ready(function () {
+            ko.applyBindings(new ParksViewModel());
+        });
+    </script>
+}
+
+
+
+
