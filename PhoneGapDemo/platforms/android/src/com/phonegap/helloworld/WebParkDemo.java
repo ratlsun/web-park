@@ -41,6 +41,7 @@ public class WebParkDemo extends CordovaActivity
 		NetworkInfo info = cm.getActiveNetworkInfo();
 		if (info != null && info.isAvailable()) {
 			super.loadUrl("http://10.0.2.2:42286", 5000);
+			//super.loadUrl("http://192.168.43.18:42286", 5000);
 		} else {
 			super.loadUrl("file:///android_asset/www/index.html", 5000);
 		}

@@ -1,5 +1,5 @@
 ﻿
-<div id="products" class="container" data-bind="foreach: parks">
+<div id="products" class="container" data-bind="foreach: parks, visible: view()=='list'">
     <div class="row">
         <div class="col-xs-6 col-md-5">
             <blockquote>
@@ -20,7 +20,23 @@
     </div>
 </div>
 
+<div id="allMap" data-bind="visible: view()=='map'">mapPlacehold</div>
+
+@section topMenu {
+    <ul class="nav navbar-nav">
+        
+    </ul>
+    <button data-bind="visible: view()=='map', click: markCP" type="button" class="btn btn-primary navbar-btn">
+        <span class="glyphicon glyphicon-screenshot"></span>我的位置
+    </button>
+    <ul class="nav navbar-nav navbar-right">
+        <li data-bind="visible: view()=='map'"><a href=" #" data-bind="click: changeView">列表</a></li>
+        <li data-bind="visible: view()=='list'"><a href=" #" data-bind="click: changeView">地图</a></li>
+    </ul>
+}
+
 @section scripts {
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=rFUmUxsrkgojO2oEu3rdtzYW"></script>
     <script>
         function Park(park) {
             var self = this;
@@ -40,6 +56,7 @@
             var self = this;
 
             self.parks = ko.observableArray([]);
+            self.view = ko.observable("list");
 
             self.occupyPlace = function (park) {
                 park.occupied('已经预订09:00-12:00');
@@ -49,6 +66,19 @@
                 park.occupied('');
             };
 
+            self.changeView = function () {
+                if (self.view() == 'list') {
+                    self.view('map');
+                } else {
+                    self.view('list');
+                }
+            };
+
+            self.markCP = function () {
+                navigator.geolocation.getCurrentPosition(geoCpHandler, geoErrorHandler, 
+                 { maximumAge: 3000, timeout: 5000, enableHighAccuracy: true });
+            };
+
             var uri = '/api/parks';
             $.getJSON(uri, function (allData) {
                 var p = $.map(allData, function (item) { return new Park(item) });
@@ -56,11 +86,43 @@
             });
         }
 
+        function geoCpHandler(position) {
+
+            alert('Latitude: ' + position.coords.latitude + '\n' +
+            'Longitude: ' + position.coords.longitude + '\n' +
+            'Altitude: ' + position.coords.altitude + '\n' +
+            'Accuracy: ' + position.coords.accuracy + '\n' +
+            'Altitude Accuracy: ' + position.coords.altitudeAccuracy + '\n' +
+            'Heading: ' + position.coords.heading + '\n' +
+            'Speed: ' + position.coords.speed + '\n' +
+            'Timestamp: ' + position.timestamp + '\n');
+
+            var p = new BMap.Point(position.coords.longitude, position.coords.latitude);
+            map.centerAndZoom(p, 15);
+            if (currentMarker != null) {
+                map.removeOverlay(currentMarker);
+            }
+            currentMarker = new BMap.Marker(p, { title: "当前位置" });
+            map.addOverlay(currentMarker);
+        };
+
+        function geoErrorHandler(error) {
+            alert('code: ' + error.code + '\n' +
+                    'message: ' + error.message + '\n');
+        };
+
         $(document).ready(function () {
             ko.applyBindings(new ParksViewModel());
+
+            map = new BMap.Map("allMap");
+            map.centerAndZoom(new BMap.Point(116.404, 39.915), 11);
+            map.addControl(new BMap.NavigationControl());
+            currentMarker = new BMap.Marker(new BMap.Point(116.404, 39.915));
         });
     </script>
 }
+
+
 
 
 
